@@ -92,4 +92,4 @@ todo
 - Code adapted from: alexemanuelol's 'team-detector'
 
 ## License
-[Your license information here]
+GNU GPL v3.0
