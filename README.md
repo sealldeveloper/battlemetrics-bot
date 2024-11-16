@@ -1,6 +1,12 @@
-# Battlemetrics Discord Bot
+<div align="center">
 
-A Discord bot that monitors and analyzes player activity on game servers using the Battlemetrics API. Get real-time notifications and track player movements across servers, track down players from usernames and correlate player sessions.
+# Rust Stalker
+
+![Rust Stalker Logo](img/logo.png)
+
+A Discord bot for monitoring and analyzing player activity on Rust servers using the Battlemetrics API. Get real-time notifications, track player movements, search for players, and correlate player sessions.
+
+</div>
 
 ## Features
 
