@@ -1,7 +1,9 @@
 from urllib.parse import urlencode, quote_plus
 import discord
+from util.general import get_steam_avatar
 
 def build_steamfind_embed(username: str):
+    """ Todo """
     base_google = "https://www.google.com/search?"
     
     queries = {

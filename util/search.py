@@ -3,6 +3,7 @@ from urllib.parse import urlencode, quote_plus
 BASE_URL = "https://api.battlemetrics.com"
 
 async def search_player(username, sort_method, seen_ids, game=None, jwt=None, interaction=None):
+    """ Todo """
     base_url = f"{BASE_URL}/players"
     params = {
         "page[size]": 90,

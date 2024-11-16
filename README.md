@@ -43,6 +43,13 @@ A Discord bot for monitoring and analyzing player activity on Rust servers using
 
 ![steamdork.png](img/steamdork.png)
 
+### Streamer Mode Steam ID Lookups
+- Supplies the Streamer Mode name of a user from a Steam ID
+- Can be used to confirm if target users Streamer Mode name matches the profile
+
+![streamername.png](img/streamername.png)
+
+
 ## Setup
 
 Create a `.env` file with your Discord webhook URL:
@@ -76,11 +83,16 @@ todo
 
 ## Core Functions
 
-### Monitoring
+### General Functions
+- `get_steam_avatar()`: Fetches a URL for the Steam Avatar given a Steam ID
+
+### Battlemetrics Functions
 - `get_battlemetrics_player()`: Fetch player status and data
 - `get_online_server()`: Check current server
 - `get_battlemetrics_server_details()`: Get server info
 - `get_recently_visited_servers()`: View server history
+
+### Monitoring
 - `send_activity_embed()`: Send a new embed to the monitoring channel to announce a change to a players status
 - `send_serverchange_embed()`: Send an embed for when the player changes server, but stays online
 
@@ -93,9 +105,13 @@ todo
 ### Steam Dorking
 - `build_steamfind_embed()`: Creates the embed of dorks for a given username
 
+### Streamer Mode Lookup
+- `get_streamermode_name()`: Finds the users streamermode name
+
 ## Credits
 - Original author: sealldev / sealldeveloper
-- Code adapted from: alexemanuelol's 'team-detector'
+- Code adapted from: [alexemanuelol's 'team-detector'](https://github.com/alexemanuelol/team-detector)
+- Streamer Mode Lookup from: [NotpainRaov's 'RustStreamerName'](https://github.com/NotpainRaov/RustStreamerName)
 
 ## License
 GNU GPL v3.0

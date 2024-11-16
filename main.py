@@ -15,15 +15,19 @@ from bs4 import BeautifulSoup
 
 from util.monitor import (
     send_activity_embed,
-    send_serverchange_embed,
-    get_battlemetrics_player,
+    send_serverchange_embed
+)
+from util.battlemetrics import (
     get_online_server,
-    get_battlemetrics_server_details,
+    get_battlemetrics_player,
     get_recently_visited_servers
+
 )
 from util.correlate import find_overlapping_sessions
 from util.search import search_player
 from util.steamfind import build_steamfind_embed
+from util.streamermode import get_streamermode_name
+from util.general import get_steam_avatar
 
 from typing import Optional
 import math
@@ -196,6 +200,35 @@ async def on_ready():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     print(f"[{timestamp}] Monitor loop started!")
 
+@tree.command(name="streamername", description="Finds the Streamer Mode name from a Steam ID")
+async def streamername(interaction: discord.Interaction, steam_id: str):
+    await interaction.response.defer()
+
+    # Log command execution
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    server_id = interaction.guild.id if interaction.guild else "DM"
+    channel_id = interaction.channel.id if interaction.channel else "N/A"
+    user_id = interaction.user.id
+    print(f"[{timestamp}] Server: {server_id}, Channel: {channel_id}, User: {user_id} - Executed streamername command - steam_id:{steam_id}")
+    
+    username = get_streamermode_name(steam_id)
+
+    embed = discord.Embed(
+        title=f"Streamer Mode Name for `{steam_id}`",
+        color=discord.Color.blue(),
+        description=f"**Username 👤:** {username}"
+    )
+
+    url = get_steam_avatar(steam_id)
+
+    if url:
+        embed.set_thumbnail(url=url)
+
+    embed.set_footer(text=f"Made by seall.dev", 
+            icon_url="https://seall.dev/images/logo.png")
+
+    await interaction.edit_original_response(embed=embed)
+
 @tree.command(name="steamfind", description="Provide Google dork URLs and Steam search URLs for a username to find their Steam profile")
 async def steamfind(interaction: discord.Interaction, username: str):
     await interaction.response.defer()
@@ -310,12 +343,13 @@ async def personahistory(interaction: discord.Interaction, steam_id: str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status != 200:
-                await interaction.followup.send(f"Error: Unable to fetch data for Steam ID {steam_id}")
+                await interaction.followup.send(f"Error: Unable to fetch data for Steam ID '`{steam_id}`'")
                 return
                 
             html = await response.text()
+            if 'does not exist!</p>' in html and '<p>ID: ' in html:
+                await interaction.followup.send(f"Error: Steam ID '`{steam_id}`' does not exist.")
             soup = BeautifulSoup(html, 'html.parser')
-            
             persona_table = soup.find('h1', string='Persona History').find_next('table')
             if not persona_table:
                 await interaction.followup.send(f"No persona history found for Steam ID {steam_id}")
@@ -327,20 +361,32 @@ async def personahistory(interaction: discord.Interaction, steam_id: str):
                 if len(columns) == 2:
                     name = columns[0].text.strip()
                     time_str = columns[1].text.strip()
+                    estimated = False
+                    if 'Estimated' in time_str:
+                        estimated = True
+                        time_str = time_str.split(' [Estimated')[0]
                     time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
                     timestamp = int(time.replace(tzinfo=timezone.utc).timestamp())
-                    persona_history.append((name, timestamp))
+                    persona_history.append((name, timestamp, estimated))
 
             pages = []
             entries_per_page = 10
             total_entries = len(persona_history)
+
+            img_tag = soup.find('img', id='userimage')
+
+            if img_tag:
+                profile_picture_url = img_tag.get('src')
             
             for i in range(0, total_entries, entries_per_page):
                 page_entries = persona_history[i:i + entries_per_page]
                 description = ""
                 
-                for name, timestamp in page_entries:
-                    entry = f"**{name}** 👤\n⏰ <t:{timestamp}:f> (<t:{timestamp}:R>)\n\n"
+                for name, timestamp, estimated in page_entries:
+                    entry = f"**{name}** 👤\nTimestamp ⏰ <t:{timestamp}:f> (<t:{timestamp}:R>)"
+                    if estimated:
+                        entry += "\n[Estimated Timestamp]"
+                    entry += "\n\n"
                     description += entry
                 
                 embed = discord.Embed(
@@ -350,6 +396,10 @@ async def personahistory(interaction: discord.Interaction, steam_id: str):
                     description=description
                 )
                 
+
+
+                embed.set_thumbnail(url=profile_picture_url)
+
                 start_entry = i + 1
                 end_entry = min(i + entries_per_page, total_entries)
                 embed.set_footer(text=f"Page {len(pages) + 1} • Entries {start_entry}-{end_entry} of {total_entries} • Made by seall.dev", 

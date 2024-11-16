@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 import requests
 import pytz
-from urllib.parse import urlencode, quote_plus
+from util.battlemetrics import get_player_sessions
 
-BASE_URL = "https://api.battlemetrics.com"
 
 async def find_overlapping_sessions(player_ids, player_names, days_back, jwt=None, ignore_jwt=False, interaction=None):
+    """ Todo """
     end_time = datetime.now(pytz.UTC)
     start_time = end_time - timedelta(days=days_back)
 
@@ -58,41 +58,3 @@ async def find_overlapping_sessions(player_ids, player_names, days_back, jwt=Non
                             })
 
     return overlapping_sessions
-
-async def get_player_sessions(player_id, player_names, start_time, end_time, jwt=None, ignore_jwt=False, interaction=None):
-    count = 1
-    url = f"{BASE_URL}/sessions"
-    params = {
-        "include": "server",
-        "page[size]": 90,
-        "filter[players]": player_id,
-    }
-    
-    if jwt and not ignore_jwt:
-        params["access_token"] = jwt
-
-    url += f"?{urlencode(params, quote_via=quote_plus)}"
-    sessions = []
-    
-    while url:
-        if interaction:
-            await interaction.edit_original_response(content=f"Fetching sessions for player {player_names[player_id]} ({player_id})... Page #{count}")
-        
-        response = requests.get(url)
-        if response.status_code == 401 and not ignore_jwt:
-            return await get_player_sessions(player_id, player_names, start_time, end_time, ignore_jwt=True, interaction=interaction)
-        if response.status_code != 200:
-            return []
-
-        data = response.json()
-        sessions.extend(data['data'])
-        
-        if 'links' in data:
-            url = data['links'].get('next')
-            if url and jwt and not ignore_jwt:
-                url += f"&access_token={jwt}"
-            count += 1
-        else:
-            url = None
-
-    return sessions
